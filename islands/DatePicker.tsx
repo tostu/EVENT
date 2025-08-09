@@ -1,28 +1,48 @@
-import { useRef } from "preact/hooks";
+import { useRef, useState } from "preact/hooks";
 
 interface DatePickerProps {
   initialValue?: string;
 }
 
 export default function DatePicker({ initialValue }: DatePickerProps) {
-  const dateInputRef = useRef<HTMLInputElement>(null);
+  console.log("initialValue", initialValue);
 
-  const formatDateForInput = (date: Date): string => {
-    return date.toISOString().split("T")[0];
+  // Format initialValue to be able to display in input
+  const formattedInitialValue = initialValue
+    ? new Date(initialValue).toISOString().split("T")[0]
+    : "";
+
+  const [date, setDate] = useState<string>(formattedInitialValue);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleDateChange = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    setDate(target.value);
+    target.form?.requestSubmit();
   };
 
   const setToday = () => {
-    if (dateInputRef.current) {
-      const today = new Date();
-      dateInputRef.current.value = formatDateForInput(today);
+    const today = new Date();
+    const formattedToday = today.toISOString().split("T")[0];
+    setDate(formattedToday);
+
+    // Update the input value directly and then submit
+    if (inputRef.current) {
+      inputRef.current.value = formattedToday;
+      inputRef.current.form?.requestSubmit();
     }
   };
 
   const setTomorrow = () => {
-    if (dateInputRef.current) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      dateInputRef.current.value = formatDateForInput(tomorrow);
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const formattedTomorrow = tomorrow.toISOString().split("T")[0];
+    setDate(formattedTomorrow);
+
+    // Update the input value directly and then submit
+    if (inputRef.current) {
+      inputRef.current.value = formattedTomorrow;
+      inputRef.current.form?.requestSubmit();
     }
   };
 
@@ -45,11 +65,12 @@ export default function DatePicker({ initialValue }: DatePickerProps) {
         </button>
       </div>
       <input
-        ref={dateInputRef}
+        ref={inputRef}
         type="date"
         name="date"
         className="input input-bordered"
-        defaultValue={initialValue}
+        value={date}
+        onInput={handleDateChange}
       />
     </div>
   );
