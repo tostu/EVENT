@@ -62,7 +62,6 @@ export default function EventsPage({ data, url }: PageProps<Data>) {
         <a class="btn btn-ghost text-xl">EVENT</a>
         <form method="GET" className="flex w-full justify-between">
           <DatePicker initialValue={selectedDate} />
-          <button type="submit" class="btn btn-primary">Submit</button>
         </form>
       </div>
       <div className="flex flex-col gap-4 container mx-auto">
