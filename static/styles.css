@@ -1,2 +1,11 @@
 @import "tailwindcss";
 @plugin "daisyui";
+@plugin "@iconify/tailwind4";
+
+h2 {
+    @apply text-2xl;
+}
+
+h3 {
+    @apply text-xl uppercase;
+}

@@ -17,6 +17,8 @@
   "exclude": ["**/_fresh/*"],
   "imports": {
     "$fresh/": "https://deno.land/x/fresh@1.7.3/",
+    "@iconify-json/tabler": "npm:@iconify-json/tabler@^1.2.20",
+    "@iconify/tailwind4": "npm:@iconify/tailwind4@^1.0.6",
     "@pakornv/fresh-plugin-tailwindcss": "jsr:@pakornv/fresh-plugin-tailwindcss@^1.0.3",
     "mongoose": "npm:mongoose@^8.17.0",
     "preact": "https://esm.sh/preact@10.22.0",
