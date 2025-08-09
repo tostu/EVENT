@@ -1,62 +1,102 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
 import { getEventsByDay } from "../service/eventService.ts";
 import DatePicker from "../islands/DatePicker.tsx";
+import EventList from "../components/EventList.tsx";
 
 interface Data {
   selectedDate: string;
-  events: any[]; // Replace 'any' with your actual event type
+  events: any[];
+  currentPage: number;
+  hasMore: boolean;
 }
 
 export const handler: Handlers<Data> = {
   async GET(req, ctx) {
     const url = new URL(req.url);
     const dateParam = url.searchParams.get("date");
+    const pageParam = url.searchParams.get("page");
 
     // Use the date from query param or default to today
     const selectedDate = dateParam || new Date().toDateString();
 
     // Parse the date for the service call
     const dateForService = dateParam ? new Date(dateParam) : new Date();
-    console.log(dateForService);
-    const events = await getEventsByDay(dateForService, 0, 20);
 
-    return await ctx.render({ selectedDate, events });
+    // Parse page number, default to 1
+    const currentPage = pageParam ? parseInt(pageParam, 10) : 1;
+    const pageSize = 20;
+    const offset = (currentPage - 1) * pageSize;
+
+    console.log(dateForService);
+    const { events, hasMore } = await getEventsByDay(
+      dateForService,
+      offset,
+      pageSize,
+    );
+
+    return await ctx.render({ selectedDate, events, currentPage, hasMore });
   },
 };
 
-export default function EventsPage({ data }: PageProps<Data>) {
-  const { selectedDate, events } = data;
+export default function EventsPage({ data, url }: PageProps<Data>) {
+  const { selectedDate, events, currentPage, hasMore } = data;
+
+  const createPageUrl = (page: number) => {
+    const searchParams = new URLSearchParams(url.searchParams);
+    searchParams.set("page", page.toString());
+    return `?${searchParams.toString()}`;
+  };
+
+  const nextDayUrl = () => {
+    const nextDate = new Date(selectedDate);
+    nextDate.setDate(nextDate.getDate() + 1);
+    const searchParams = new URLSearchParams(url.searchParams);
+    searchParams.set("date", nextDate.toDateString());
+    searchParams.set("page", "1");
+    return `?${searchParams.toString()}`;
+  };
 
   return (
-    <>
-      <form method="GET" className="flex w-full justify-between">
-        <DatePicker initialValue={selectedDate} />
-        <button type="submit" class="btn btn-primary">Submit</button>
-      </form>
-      <ul class="list bg-base-100 rounded-box shadow-md">
-        <li class="p-4 pb-2 text-xs opacity-60 tracking-wide">
-          Most played songs this week
-        </li>
-        {events.map((event) => (
-          <li class="list-row" key={event.id}>
-            <div>
-              <div>{event.title}</div>
-              <div class="text-xs uppercase font-semibold opacity-60">
-                {event.date.length === 1
-                  ? event.date[0]?.toLocaleDateString()
-                  : event.date[0]?.toLocaleDateString() + " - " +
-                    event.date[event.date.length - 1]?.toLocaleDateString()}
+    <div class="layout flex flex-col min-h-screen">
+      <div class="navbar bg-base-100 shadow-sm sticky top-0 z-10">
+        <a class="btn btn-ghost text-xl">EVENT</a>
+        <form method="GET" className="flex w-full justify-between">
+          <DatePicker initialValue={selectedDate} />
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
+      <div className="flex flex-col gap-4 container mx-auto">
+        <EventList events={events} />
+        <div className="flex justify-center">
+          {hasMore
+            ? (
+              <div class="join">
+                <a
+                  href={createPageUrl(Math.max(1, currentPage - 1))}
+                  class={`join-item btn ${
+                    currentPage === 1 ? "btn-disabled" : ""
+                  }`}
+                >
+                  «
+                </a>
+                <button disabled type="button" class="join-item btn">
+                  Page {currentPage}
+                </button>
+                <a
+                  href={createPageUrl(currentPage + 1)}
+                  class={`join-item btn ${hasMore ? "" : "btn-disabled"}`}
+                >
+                  »
+                </a>
               </div>
-              <div class="text-xs uppercase font-semibold opacity-60">
-                {event.time || ""}
-              </div>
-              <div class="text-xs uppercase font-semibold opacity-60">
-                {event.location || ""}
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
-    </>
+            )
+            : (
+              <a href={nextDayUrl()} className="join-item btn btn-primary">
+                Next Day
+              </a>
+            )}
+        </div>
+      </div>
+    </div>
   );
 }
